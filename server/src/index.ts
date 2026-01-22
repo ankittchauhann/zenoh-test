@@ -24,6 +24,7 @@ app.use(
 
 let session: Session | null = null;
 let subscriber: Subscriber | null = null;
+let currentSubscribeKey: string = "test/**";
 
 app.route("/", routes);
 
@@ -36,8 +37,33 @@ const io = new SocketIOServer(server, {
 });
 
 io.on("connection", (socket) => {
-	socket.emit("zenoh:status", { status: session ? "connected" : "disconnected" });
+	socket.emit("zenoh:status", {
+		status: session ? "connected" : "disconnected",
+	});
 });
+
+async function updateSubscription(key: string) {
+	if (!session) return;
+	try {
+		if (subscriber) {
+			await subscriber.undeclare();
+			subscriber = null;
+		}
+		currentSubscribeKey = key;
+		subscriber = await session.declareSubscriber(key, {
+			handler: (sample) => {
+				const value = sample.payload().toString();
+				const keyexpr = sample.keyexpr().toString();
+				console.log(`Received on ${keyexpr}: ${value}`);
+				io.emit("zenoh:data", { key: keyexpr, value });
+			},
+		});
+		io.emit("zenoh:status", { status: "connected" });
+	} catch (err) {
+		console.error("Failed to update subscription:", err);
+		io.emit("zenoh:status", { status: "error" });
+	}
+}
 
 async function initZenoh() {
 	if (session) return; // Already connected
@@ -49,15 +75,8 @@ async function initZenoh() {
 		console.log("Connected to Zenoh");
 		io.emit("zenoh:status", { status: "connected" });
 
-		// Set up a test subscriber (simulates receiving ROS data)
-		subscriber = await session.declareSubscriber("test/**", {
-			handler: (sample) => {
-				const value = sample.payload().toString();
-				const key = sample.keyexpr().toString();
-				console.log(`Received on ${key}: ${value}`);
-				io.emit("zenoh:data", { key, value });
-			},
-		});
+		// Set up default subscriber
+		await updateSubscription(currentSubscribeKey);
 	} catch (error) {
 		console.error("Zenoh connection failed:", error);
 		io.emit("zenoh:status", { status: "error" });
@@ -75,7 +94,10 @@ const handlePublish = async (c: Context) => {
 	if (!session) return c.json({ error: "Zenoh not connected" }, 500);
 
 	const body = await c.req.json().catch(() => ({}));
-	const key = typeof body?.key === "string" && body.key.length > 0 ? body.key : "test/cmd";
+	const key =
+		typeof body?.key === "string" && body.key.length > 0
+			? body.key
+			: "test/cmd";
 	const value = typeof body?.value === "string" ? body.value : "";
 
 	await session.put(key, value);
@@ -86,8 +108,26 @@ const handlePublish = async (c: Context) => {
 const handleQuery = async (c: Context) => {
 	if (!session) return c.json({ error: "Zenoh not connected" }, 500);
 
-	const key = c.req.query("key") || "test/**";
-	const replies = await session.get(key);
+	let key = "test/**";
+	let payload: string | undefined;
+
+	if (c.req.method === "POST") {
+		const body = await c.req.json().catch(() => ({}));
+		if (typeof body?.key === "string" && body.key.length > 0) {
+			key = body.key;
+		}
+		if (typeof body?.payload === "string" && body.payload.length > 0) {
+			payload = body.payload;
+		}
+	} else {
+		key = c.req.query("key") || "test/**";
+		const queryPayload = c.req.query("payload");
+		if (typeof queryPayload === "string" && queryPayload.length > 0) {
+			payload = queryPayload;
+		}
+	}
+
+	const replies = await session.get(key, payload ? { payload } : undefined);
 	if (!replies) return c.json({ results: [] });
 
 	const results: { key: string; value: string }[] = [];
@@ -106,11 +146,25 @@ const handleQuery = async (c: Context) => {
 	return c.json({ results });
 };
 
+const handleSubscribe = async (c: Context) => {
+	if (!session) return c.json({ error: "Zenoh not connected" }, 500);
+	const body = await c.req.json().catch(() => ({}));
+	const key =
+		typeof body?.key === "string" && body.key.length > 0 ? body.key : undefined;
+	if (!key) return c.json({ error: "key is required" }, 400);
+	await updateSubscription(key);
+	return c.json({ ok: true, key });
+};
+
 // Endpoint to publish data (e.g., send command to future ROS)
 app.post("/zenoh/publish", handlePublish);
 app.post("/publish", handlePublish);
 app.get("/zenoh/query", handleQuery);
 app.get("/query", handleQuery);
+app.post("/zenoh/query", handleQuery);
+app.post("/query", handleQuery);
+app.post("/zenoh/subscribe", handleSubscribe);
+app.post("/subscribe", handleSubscribe);
 
 process.on("SIGINT", async () => {
 	if (subscriber) await subscriber.undeclare();
