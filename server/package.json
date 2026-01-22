@@ -1,0 +1,21 @@
+{
+  "name": "server",
+  "type": "module",
+  "scripts": {
+    "dev": "NODE_OPTIONS='--experimental-wasm-modules --no-warnings' tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@eclipse-zenoh/zenoh-ts": "^1.7.2",
+    "@hono/node-server": "^1.19.9",
+    "@types/ws": "^8.18.1",
+    "hono": "^4.11.4",
+    "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.9",
+    "tsx": "^4.7.1",
+    "typescript": "^5.9.3"
+  }
+}

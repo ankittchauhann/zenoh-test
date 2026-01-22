@@ -1,0 +1,21 @@
+{
+  "version": "5",
+  "remote": {
+    "https://deno.land/std@0.224.0/async/delay.ts": "f90dd685b97c2f142b8069082993e437b1602b8e2561134827eeb7c12b95c499",
+    "https://deno.land/std@0.224.0/http/server.ts": "f9313804bf6467a1704f45f76cb6cd0a3396a3b31c316035e6a4c2035d1ea514"
+  },
+  "workspace": {
+    "packageJson": {
+      "dependencies": [
+        "npm:@eclipse-zenoh/zenoh-ts@^1.7.2",
+        "npm:@hono/node-server@^1.19.9",
+        "npm:@types/node@^25.0.9",
+        "npm:@types/ws@^8.18.1",
+        "npm:hono@^4.11.4",
+        "npm:tsx@^4.7.1",
+        "npm:typescript@^5.9.3",
+        "npm:ws@^8.19.0"
+      ]
+    }
+  }
+}
