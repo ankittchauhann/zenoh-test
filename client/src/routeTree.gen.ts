@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ZenohTestIndexRouteImport } from './routes/zenoh-test/index'
+import { Route as ZenohBackendIndexRouteImport } from './routes/zenoh-backend/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,30 +23,39 @@ const ZenohTestIndexRoute = ZenohTestIndexRouteImport.update({
   path: '/zenoh-test/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ZenohBackendIndexRoute = ZenohBackendIndexRouteImport.update({
+  id: '/zenoh-backend/',
+  path: '/zenoh-backend/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/zenoh-backend/': typeof ZenohBackendIndexRoute
   '/zenoh-test/': typeof ZenohTestIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/zenoh-backend': typeof ZenohBackendIndexRoute
   '/zenoh-test': typeof ZenohTestIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/zenoh-backend/': typeof ZenohBackendIndexRoute
   '/zenoh-test/': typeof ZenohTestIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/zenoh-test/'
+  fullPaths: '/' | '/zenoh-backend/' | '/zenoh-test/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/zenoh-test'
-  id: '__root__' | '/' | '/zenoh-test/'
+  to: '/' | '/zenoh-backend' | '/zenoh-test'
+  id: '__root__' | '/' | '/zenoh-backend/' | '/zenoh-test/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ZenohBackendIndexRoute: typeof ZenohBackendIndexRoute
   ZenohTestIndexRoute: typeof ZenohTestIndexRoute
 }
 
@@ -65,11 +75,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ZenohTestIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/zenoh-backend/': {
+      id: '/zenoh-backend/'
+      path: '/zenoh-backend'
+      fullPath: '/zenoh-backend/'
+      preLoaderRoute: typeof ZenohBackendIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ZenohBackendIndexRoute: ZenohBackendIndexRoute,
   ZenohTestIndexRoute: ZenohTestIndexRoute,
 }
 export const routeTree = rootRouteImport

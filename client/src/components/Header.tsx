@@ -13,6 +13,7 @@ export default function Header() {
 					onClick={() => setIsOpen(true)}
 					className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
 					aria-label="Open menu"
+					type="button"
 				>
 					<Menu size={24} />
 				</button>
@@ -38,6 +39,7 @@ export default function Header() {
 						onClick={() => setIsOpen(false)}
 						className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
 						aria-label="Close menu"
+						type="button"
 					>
 						<X size={24} />
 					</button>
@@ -66,12 +68,20 @@ export default function Header() {
 						}}
 					>
 						<Home size={20} />
-						<span className="font-medium">Zenoh Test</span>
+						<span className="font-medium">Zenoh Frontend</span>
 					</Link>
-
-					{/* Demo Links Start */}
-
-					{/* Demo Links End */}
+					<Link
+						to="/zenoh-backend"
+						onClick={() => setIsOpen(false)}
+						className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
+						activeProps={{
+							className:
+								"flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2",
+						}}
+					>
+						<Home size={20} />
+						<span className="font-medium">Zenoh Backend</span>
+					</Link>
 				</nav>
 			</aside>
 		</>
